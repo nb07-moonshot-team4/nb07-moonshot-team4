@@ -34,4 +34,3 @@ export interface  getTodolistByProjectIdDto {
   ],
   total : number;
 }
-

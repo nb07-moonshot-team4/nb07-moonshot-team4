@@ -1,20 +1,17 @@
 import { Request, Response } from 'express';
-import * as taskService from '../services/task.service.js';
-import { CreateSubTaskDto, CreateTaskDto, UpdateSubTaskDto, UpdateTaskDto } from '../dtos/task.dto.js';
+import * as taskService from './task.service.js';
+import { CreateSubTaskDto, CreateTaskDto, UpdateSubTaskDto, UpdateTaskDto } from './task.dto.js';
 
 export const createTask = async (req: Request, res: Response) => {
   try {
-
     if (!req.user) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
     const userId = req.user.id;
 
-
     const projectId = Number(req.params.projectId);
     const createTaskDto: CreateTaskDto = req.body;
 
- 
     const result = await taskService.createTask(userId, projectId, createTaskDto);
 
     res.status(200).json(result);
@@ -26,7 +23,6 @@ export const createTask = async (req: Request, res: Response) => {
       return res.status(error.status).json({ message: error.message });
     }
 
- 
     res.status(500).json({ message: "서버 내부 오류가 발생했습니다." });
   }
 };
@@ -137,7 +133,6 @@ export async function deleteTask(req: Request, res: Response) {
   }
 }
 
-// 서브테스크 컨트롤러 나중에 create 는 gemini api 연결 할 예정 입니다 . 
 export async function createSubTask(req: Request, res: Response) {
   try {
     if (!req.user) {

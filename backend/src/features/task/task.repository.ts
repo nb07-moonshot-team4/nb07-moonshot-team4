@@ -1,5 +1,5 @@
 import { Prisma, SubTaskStatus, TaskStatus } from "@prisma/client";
-import prisma from "../utils/prisma.js";
+import prisma from "../../shared/utils/prisma.js";
 
 type TaskWithAssigneeAndTags = Prisma.TaskGetPayload<{
   include: {
@@ -234,7 +234,6 @@ export function deleteTask(taskId: number): Promise<TaskWithAssigneeAndTags> {
   });
 }
 
-// ----- SubTask repository -----
 type SubTaskWithTask = Prisma.SubTaskGetPayload<{ include: { task: true } }>;
 
 export function createSubTask(taskId: number, title: string): Promise<SubTaskWithTask> {

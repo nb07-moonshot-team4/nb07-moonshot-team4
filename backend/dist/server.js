@@ -1,16 +1,15 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import taskRouter from './features/task/task.router.js';
 dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-// middleware
 app.use(express.json());
-// health check
 app.get('/', (req, res) => {
-    res.send('🚀 Moonshot backend is running');
+    res.send('서버 작동중 ......');
 });
-// server start
+app.use('/api', taskRouter);
 app.listen(PORT, () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
+    console.log(`서버 시작 중 ... : http://localhost:${PORT}`);
 });
 //# sourceMappingURL=server.js.map

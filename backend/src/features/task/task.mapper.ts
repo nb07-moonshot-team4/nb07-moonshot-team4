@@ -1,4 +1,4 @@
-import { TaskDto } from "../dtos/task.dto.js";
+import { TaskDto } from "./task.dto.js";
 
 function toApiTaskStatus(status: any): TaskDto["status"] {
   const v = String(status).toUpperCase();

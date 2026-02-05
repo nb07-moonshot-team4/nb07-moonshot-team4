@@ -1,9 +1,8 @@
-import CrudTaskApi from '../utils/taskMapper.js';
-import * as taskRepo from '../repositories/task.repository.js';
-import * as projectRepo from '../repositories/project.repository.js';
-import { CreateSubTaskDto, CreateTaskDto, GetTasksResponseDto, SubTaskDto,toSubTaskDto, TaskDto, UpdateSubTaskDto, UpdateTaskDto } from '../dtos/task.dto.js';
+import CrudTaskApi from './task.mapper.js';
+import * as taskRepo from './task.repository.js';
+import * as projectRepo from '../../features/project/project.repository.js';
+import { CreateSubTaskDto, CreateTaskDto, GetTasksResponseDto, SubTaskDto,toSubTaskDto, TaskDto, UpdateSubTaskDto, UpdateTaskDto } from './task.dto.js';
 import { SubTaskStatus } from '@prisma/client';
-
 
 export const createTask = async (userId: number, projectId: number, data: CreateTaskDto): Promise<TaskDto> => {
   const targetProject = await projectRepo.getProjectById(projectId);
@@ -26,7 +25,6 @@ export const createTask = async (userId: number, projectId: number, data: Create
     throw { status: 400, message: "종료일이 시작일보다 빠를 수 없습니다" };
   }
 
- 
   const taskStatus = data.status || 'todo';
 
   const createdTask = await taskRepo.createTask({

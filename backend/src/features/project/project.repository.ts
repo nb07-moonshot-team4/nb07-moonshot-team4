@@ -1,5 +1,5 @@
 import { Project } from "@prisma/client";
-import prisma from "../utils/prisma.js";
+import prisma from "../../shared/utils/prisma.js";
 
 export function createProject(data: Project) {
   return prisma.project.create({ data });
@@ -11,14 +11,12 @@ export function getProjectById(projectId: number): Promise<Project | null> {
   });
 }
 
-
 export async function isProjectMember(userId: number, projectId: number): Promise<boolean> {
   const project = await getProjectById(projectId);
   if (!project) {
     return false;
   }
   
-
   const member = await prisma.projectMember.findFirst({
     where: {
       userId: userId,
@@ -37,6 +35,5 @@ export async function isProjectMember(userId: number, projectId: number): Promis
     },
   });
   
- 
   return !!task;
 }
