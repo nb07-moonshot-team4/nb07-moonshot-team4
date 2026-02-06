@@ -11,10 +11,14 @@ export class MemberService {
 
     private toApiStatus(status: MemberStatus): "pending" | "accepted" | "rejected" {
         switch (status) {
-            case "INVITED": return "pending";
-            case "ACTIVE": return "accepted";
-            case "REJECTED": return "rejected";
-            default: return "rejected";
+            case "INVITED":
+                return "pending";
+            case "ACTIVE":
+                return "accepted";
+            case "REJECTED":
+                return "rejected";
+            default:
+                return "rejected";
         }
     }
 
@@ -25,13 +29,29 @@ export class MemberService {
         return { limit, skip };
     }
 
-    // GET members
-    async listMembers(actorId: number, projectId: number, pageRaw?: string, limitRaw?: string) {
+    private async requireProject(projectId: number) {
         const project = await this.repo.findProject(projectId);
-        if (!project) throw new NotFoundError("프로젝트가 없습니다");
+        if (!project) throw new NotFoundError("잘못된 요청 형식");
+        return project;
+    }
 
-        const isMember = await this.repo.isActiveMember(projectId, actorId);
-        if (!isMember) throw new ForbiddenError("프로젝트 멤버가 아닙니다");
+    private async requireActiveMember(projectId: number, actorId: number) {
+        const actor = await this.repo.findActiveMember(projectId, actorId);
+        if (!actor) throw new ForbiddenError("프로젝트 멤버가 아닙니다");
+        return actor;
+    }
+
+    private async requireOwner(projectId: number, actorId: number) {
+        const actor = await this.requireActiveMember(projectId, actorId);
+        if (actor.role !== "OWNER") throw new ForbiddenError("권한이 없습니다.");
+        return actor;
+    }
+
+    // GET /projects/:projectId/users
+    async listMembers(actorId: number, projectId: number, pageRaw?: string, limitRaw?: string) {
+        await this.requireProject(projectId);
+
+        await this.requireActiveMember(projectId, actorId);
 
         const { limit, skip } = this.parsePaging(pageRaw, limitRaw);
         const { total, rows } = await this.repo.findMembersPaged(projectId, skip, limit);
@@ -52,27 +72,20 @@ export class MemberService {
         return { data, total };
     }
 
-    // DELETE member 
+    // DELETE /projects/:projectId/users/:userId
     async deleteMember(actorId: number, projectId: number, targetUserId: number) {
-        const project = await this.repo.findProject(projectId);
-        if (!project) throw new NotFoundError("프로젝트를 찾을 수 없습니다");
-
-        const isMember = await this.repo.isActiveMember(projectId, actorId);
-        if (!isMember) throw new ForbiddenError("프로젝트 관리자가 아닙니다");
-
+        await this.requireProject(projectId);
+        await this.requireOwner(projectId, actorId);
         const target = await this.repo.findMember(projectId, targetUserId);
         if (!target) throw new NotFoundError("멤버를 찾을 수 없습니다");
-
         await this.repo.markMemberLeft(projectId, targetUserId);
     }
 
-    // POST invitation 
+    // POST /projects/:projectId/invitations
     async createInvitation(actorId: number, projectId: number, email: string) {
-        const project = await this.repo.findProject(projectId);
-        if (!project) throw new NotFoundError("프로젝트를 찾을 수 없습니다");
+        await this.requireProject(projectId);
 
-        const actor = await this.repo.findActiveMember(projectId, actorId);
-        if (!actor) throw new ForbiddenError("프로젝트 관리자가 아닙니다");
+        const actor = await this.requireActiveMember(projectId, actorId);
 
         const canInvite = actor.role === "OWNER" || actor.role === "ADMIN";
         if (!canInvite) throw new ForbiddenError("프로젝트 관리자가 아닙니다");
@@ -86,26 +99,22 @@ export class MemberService {
         return { invitationId };
     }
 
-    //POST 멤버초대수락 
+    // POST /invitations/:invitationId/accept
     async acceptInvitation(actorId: number, invitationId: string) {
         const invited = await this.repo.findMemberByInvitationId(invitationId);
-        if (!invited) {
-            throw new NotFoundError("초대를 찾을 수 없습니다");
+        if (!invited || invited.status !== MemberStatus.INVITED) {
+            throw new NotFoundError("유효하지 않은 초대입니다");
         }
         await this.repo.acceptInvitation(invitationId);
     }
-    //DELETE 멤버초대삭제
+
+    // DELETE /invitations/:invitationId
     async deleteInvitation(actorId: number, invitationId: string) {
         const invited = await this.repo.findMemberByInvitationId(invitationId);
         if (!invited || invited.status !== MemberStatus.INVITED) {
-            throw new NotFoundError("초대를 찾을 수 없습니다", "INVITATION_NOT_FOUND");
+            throw new NotFoundError;
         }
-
-        // 여기서 actor 권한(ADMIN/OWNER) 체크는 기존 로직 그대로
-        // const actor = await this.repo.findActiveMember(invited.projectId, actorId);
-        // if (!actor || !["ADMIN","OWNER"].includes(actor.role)) throw new ForbiddenError(...);
-
+        await this.requireOwner(invited.projectId, actorId);
         await this.repo.cancelInvitation(invitationId);
     }
 }
-

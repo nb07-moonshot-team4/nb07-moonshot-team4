@@ -19,7 +19,7 @@ export class MemberRepo {
   async isActiveMember(projectId: number, userId: number): Promise<boolean> {
     const row = await prisma.projectMember.findFirst({
       where: { projectId, userId, status: MemberStatus.ACTIVE },
-      select: { userId: true },
+      select: { userId: true, role: true, status: true },
     });
     return !!row;
   }
@@ -65,7 +65,7 @@ export class MemberRepo {
         userId,
         status: { not: MemberStatus.LEFT },
       },
-      select: { userId: true },
+      select: { userId: true, role: true, status: true },
     });
   }
 
