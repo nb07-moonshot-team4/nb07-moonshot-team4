@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import prisma from "../../shared/utils/prisma.js";
 import * as taskService from "./task-service.js";
 import {
   CreateSubTaskDto,
@@ -252,3 +253,48 @@ export async function deleteSubTask(req: Request, res: Response) {
     res.status(500).json({ message: "서버 내부 오류가 발생했습니다." });
   }
 }
+
+export const getDashboardTasks = async (req: Request, res: Response) => {
+  const { project_id, assignee_id, keyword, status } = req.query;
+
+  try {
+    const where: any = {};
+
+    if (project_id) {
+      where.projectId = Number(project_id);
+    }
+
+    if (assignee_id && assignee_id !== "all") {
+      where.assigneeId = Number(assignee_id);
+    }
+
+    if (keyword) {
+      where.title = {
+        contains: String(keyword),
+        mode: "insensitive",
+      };
+    }
+
+    if (status && status !== "all") {
+      where.status = String(status).toUpperCase() as any;
+    }
+
+    const tasks = await prisma.task.findMany({
+      where,
+      include: {
+        assignee: {
+          select: { id: true, name: true, profileImage: true },
+        },
+        project: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "대시보드 조회 실패", error });
+  }
+};

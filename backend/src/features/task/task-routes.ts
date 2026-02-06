@@ -1,23 +1,26 @@
-import { Router } from 'express';
-import * as taskController from './task-controller.js'
+import { Router } from "express";
+import * as taskController from "./task-controller.js";
+import { authMiddleware } from "../auth/auth-middleware.js";
 const router = Router();
 
-router.get('/projects/:projectId/tasks', taskController.getTasksByProjectId);
+router.get("/dashboard", authMiddleware, taskController.getDashboardTasks);
 
-router.get('/tasks/:taskId', taskController.getTask);
+router.get("/projects/:projectId/tasks", taskController.getTasksByProjectId);
 
-router.post('/projects/:projectId/tasks', taskController.createTask);
+router.get("/tasks/:taskId", taskController.getTask);
 
-router.put('/tasks/:taskId', taskController.updateTask);
+router.post("/projects/:projectId/tasks", taskController.createTask);
 
-router.delete('/tasks/:taskId', taskController.deleteTask);
+router.put("/tasks/:taskId", taskController.updateTask);
 
-router.post('/tasks/:taskId/subtasks', taskController.createSubTask);
+router.delete("/tasks/:taskId", taskController.deleteTask);
 
-router.get('/subtasks/:subTaskId', taskController.getSubTask);
+router.post("/tasks/:taskId/subtasks", taskController.createSubTask);
 
-router.patch('/subtasks/:subTaskId', taskController.updateSubTask);
+router.get("/subtasks/:subTaskId", taskController.getSubTask);
 
-router.delete('/subtasks/:subTaskId', taskController.deleteSubTask);
+router.patch("/subtasks/:subTaskId", taskController.updateSubTask);
+
+router.delete("/subtasks/:subTaskId", taskController.deleteSubTask);
 
 export default router;
