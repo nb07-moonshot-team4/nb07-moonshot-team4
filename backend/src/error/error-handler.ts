@@ -12,7 +12,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     });
   }
 
-  // 2. 우리가 정의한 HttpError (및 상속받은 모든 에러들)
+  // 2. HttpError (및 상속받은 모든 에러들)
   if (err instanceof HttpError) {
     return res.status(err.status).json({
       message: err.message,

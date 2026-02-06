@@ -1,25 +1,31 @@
-import express from 'express';
-import dotenv from 'dotenv';
+import express from "express";
+import dotenv from "dotenv";
+import commentRoutes from "./features/comment/comment-routes.js";
+import authRoutes from "./features/auth/auth-routes.js";
+import taskRoutes from "./features/task/task-routes.js";
 import { errorHandler } from "./error/error-handler.js";
-import memberRoutes from "./member/member-router.js";
+import memberRoutes from "./features/member/member-router.js";
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// middleware
 app.use(express.json());
-app.use(memberRoutes);
 
-// health check
-app.get('/', (req, res) => {
-  res.send('🚀 Moonshot backend is running');
+app.get("/", (req, res) => {
+  res.send("서버 작동중 ......");
 });
 
-// server start
+app.use("/api/auth", authRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/members", memberRoutes);
+
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`서버 시작 중 ... : http://localhost:${PORT}`);
 });
+
 
 app.use(errorHandler);
 

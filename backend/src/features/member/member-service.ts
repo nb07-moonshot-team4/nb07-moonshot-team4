@@ -3,7 +3,7 @@ import {
     BadRequestError,
     ForbiddenError,
     NotFoundError,
-} from "../error/errors.js";
+} from "../../error/errors.js";
 import { MemberStatus } from "@prisma/client";
 
 export class MemberService {

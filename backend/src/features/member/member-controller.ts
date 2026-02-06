@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { BadRequestError, UnauthorizedError } from "../error/errors.js";
+import { BadRequestError, UnauthorizedError } from "../../error/errors.js";
 import { MemberService } from "./member-service.js";
 
 const service = new MemberService();
@@ -49,9 +49,7 @@ export const createInvitation = async (req: Request, res: Response) => {
   if (!email || !email.includes("@")) {
     throw new BadRequestError("잘못된 요청 형식");
   }
-
   const { invitationId } = await service.createInvitation(user.id, projectId, email);
-
   if (process.env.NODE_ENV !== "production") {
     console.log(`[DEV] invitationId=${invitationId} projectId=${projectId} email=${email}`);
   }
