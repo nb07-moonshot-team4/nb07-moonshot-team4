@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-=======
->>>>>>> 403e8f30b8c34c9b6b7011895c5f948ddd934b03
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -16,126 +7,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-<<<<<<< HEAD
-model User {
-  id                Int                 @id @default(autoincrement())
-  email             String              @unique
-  name              String
-  profileImage      String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  projects          ProjectMember[]
-  assignedTasks     Task[]              @relation("TaskAssignee")
-  authProviders     UserAuthProvider[]
-  refreshTokens     RefreshToken[]
-}
-
-model Project {
-  id          Int              @id @default(autoincrement())
-  name        String
-  description String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  members     ProjectMember[]
-  tasks       Task[]
-}
-
-model ProjectMember {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  projectId    Int
-  status       String
-  invitationId String?
-  createdAt    DateTime @default(now())
-
-  user         User    @relation(fields: [userId], references: [id])
-  project      Project @relation(fields: [projectId], references: [id])
-
-  @@unique([userId, projectId])
-}
-
-model Task {
-  id          Int      @id @default(autoincrement())
-  projectId   Int
-  assigneeId  Int?
-  title       String
-  startYear   Int
-  startMonth  Int
-  startDay    Int
-  endYear     Int
-  endMonth    Int
-  endDay      Int
-  status      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  project     Project @relation(fields: [projectId], references: [id])
-  assignee    User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
-
-  subTasks    SubTask[]
-  comments    Comment[]
-  attachments Attachment[]
-  tags        TaskTag[]
-}
-
-model Tag {
-  id    Int      @id @default(autoincrement())
-  name  String  @unique
-
-  tasks TaskTag[]
-}
-
-model TaskTag {
-  taskId Int
-  tagId  Int
-
-  task   Task @relation(fields: [taskId], references: [id])
-  tag    Tag  @relation(fields: [tagId], references: [id])
-
-  @@id([taskId, tagId])
-}
-
-model Attachment {
-  id      Int    @id @default(autoincrement())
-  taskId  Int
-  url     String
-
-  task    Task   @relation(fields: [taskId], references: [id])
-}
-
-model Comment {
-  id        Int      @id @default(autoincrement())
-  taskId    Int
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  task      Task     @relation(fields: [taskId], references: [id])
-}
-
-model SubTask {
-  id        Int      @id @default(autoincrement())
-  taskId    Int
-  title     String
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  task      Task     @relation(fields: [taskId], references: [id])
-}
-
-model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  token     String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  revokedAt DateTime?
-
-  user      User     @relation(fields: [userId], references: [id])
-=======
 //////////////////// ENUMS ////////////////////
 
 enum Role {
@@ -188,7 +59,6 @@ model User {
   comments        Comment[]
   authProviders   UserAuthProvider[]
   refreshTokens   RefreshToken[]
->>>>>>> 403e8f30b8c34c9b6b7011895c5f948ddd934b03
 }
 
 model UserAuthProvider {
@@ -197,14 +67,6 @@ model UserAuthProvider {
   provider       String
   providerUserId String
   passwordHash   String?
-<<<<<<< HEAD
-  createdAt      DateTime @default(now())
-
-  user           User     @relation(fields: [userId], references: [id])
-
-  @@unique([provider, providerUserId])
-}
-=======
 
   accessToken    String?  @db.Text
   refreshToken   String?  @db.Text
@@ -365,4 +227,3 @@ model Attachment {
 
   task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
->>>>>>> 403e8f30b8c34c9b6b7011895c5f948ddd934b03
