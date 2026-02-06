@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { BadRequestError, UnauthorizedError } from "../common/errors.js";
+import { BadRequestError, UnauthorizedError } from "../error/errors.js";
 import { MemberService } from "./member-service.js";
 
 const service = new MemberService();
@@ -57,4 +57,29 @@ export const createInvitation = async (req: Request, res: Response) => {
   }
 
   return res.status(201).json({ invitationId });
+};
+
+//POST/invitations/:invitationId/accept
+export const acceptInvitation = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) throw new UnauthorizedError("로그인이 필요합니다", "UNAUTHORIZED");
+
+  const invitationId = String(req.params.invitationId ?? "").trim();
+  if (!invitationId) {
+    throw new BadRequestError("잘못된 요청 형식");
+  }
+  await service.acceptInvitation(user.id, invitationId);
+  return res.status(200).end();
+};
+
+//DELETE/invitations/:invitationId
+export const deleteInvitation = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) throw new UnauthorizedError("로그인이 필요합니다");
+  const invitationId = String(req.params.invitationId ?? "").trim();
+  if (!invitationId) {
+    throw new BadRequestError("잘못된 요청 형식");
+  }
+  await service.deleteInvitation(user.id, invitationId);
+  return res.status(204).end();
 };

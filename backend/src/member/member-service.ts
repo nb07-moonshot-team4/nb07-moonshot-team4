@@ -3,8 +3,8 @@ import {
     BadRequestError,
     ForbiddenError,
     NotFoundError,
-} from "../common/errors.js";
-import type { MemberStatus } from "@prisma/client";
+} from "../error/errors.js";
+import { MemberStatus } from "@prisma/client";
 
 export class MemberService {
     private repo = new MemberRepo();
@@ -85,4 +85,27 @@ export class MemberService {
         const invitationId = await this.repo.upsertInvitationMember(projectId, invitedUser.id);
         return { invitationId };
     }
+
+    //POST 멤버초대수락 
+    async acceptInvitation(actorId: number, invitationId: string) {
+        const invited = await this.repo.findMemberByInvitationId(invitationId);
+        if (!invited) {
+            throw new NotFoundError("초대를 찾을 수 없습니다");
+        }
+        await this.repo.acceptInvitation(invitationId);
+    }
+    //DELETE 멤버초대삭제
+    async deleteInvitation(actorId: number, invitationId: string) {
+        const invited = await this.repo.findMemberByInvitationId(invitationId);
+        if (!invited || invited.status !== MemberStatus.INVITED) {
+            throw new NotFoundError("초대를 찾을 수 없습니다", "INVITATION_NOT_FOUND");
+        }
+
+        // 여기서 actor 권한(ADMIN/OWNER) 체크는 기존 로직 그대로
+        // const actor = await this.repo.findActiveMember(invited.projectId, actorId);
+        // if (!actor || !["ADMIN","OWNER"].includes(actor.role)) throw new ForbiddenError(...);
+
+        await this.repo.cancelInvitation(invitationId);
+    }
 }
+

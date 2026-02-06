@@ -8,7 +8,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
         const token = authHeader && authHeader.split(' ')[1];
 
         // 토큰이 없는 경우
-        if(!token) {
+        if (!token) {
             return res.status(401).json({
                 status: 'error',
                 mesaage: '인증 토큰이 없습니다.',
@@ -18,7 +18,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
         // Util을 사용하여 토큰 검증
         const decoded = AuthUtil.verifyToken(token);
 
-        if(!decoded) {
+        if (!decoded) {
             return res.status(401).json({
                 status: 'error',
                 message: '유효하지 않거나 만료된 토큰입니다.',

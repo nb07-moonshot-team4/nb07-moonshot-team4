@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { errorHandler } from "./common/errors.js";
+import { errorHandler } from "./error/error-handler.js";
 import memberRoutes from "./member/member-router.js";
 dotenv.config();
 
@@ -22,4 +22,5 @@ app.listen(PORT, () => {
 });
 
 app.use(errorHandler);
+
 export default app;

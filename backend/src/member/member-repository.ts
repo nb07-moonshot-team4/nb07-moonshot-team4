@@ -58,7 +58,6 @@ export class MemberRepo {
     return { total, rows };
   }
 
-
   async findMember(projectId: number, userId: number) {
     return prisma.projectMember.findFirst({
       where: {
@@ -135,4 +134,40 @@ export class MemberRepo {
     }
     return map;
   }
+
+  //todo invitationId String? @unique 스키마 유니크키 변경 
+  async findMemberByInvitationId(invitationId: string) {
+    return prisma.projectMember.findUnique({
+      where: { invitationId },
+      select: {
+        projectId: true,
+        userId: true,
+        status: true,
+        invitationId: true,
+      },
+    });
+  }
+  //초대수락 
+  async acceptInvitation(invitationId: string) {
+    await prisma.projectMember.update({
+      where: { invitationId },
+      data: {
+        status: MemberStatus.ACTIVE,
+        joinedAt: new Date(),
+        invitationId: null,
+      },
+    });
+  }
+  //초대삭제
+  async cancelInvitation(invitationId: string) {
+    await prisma.projectMember.update({
+      where: { invitationId },
+      data: {
+        status: MemberStatus.REJECTED,
+        invitationId: null,
+        joinedAt: null,
+      },
+    });
+  }
 }
+
