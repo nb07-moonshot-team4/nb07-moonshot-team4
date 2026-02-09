@@ -2,6 +2,7 @@ export interface TaskDto {
   id: number;
   projectId: number;
   title: string;
+  content?: string;
   startYear: number;
   startMonth: number;
   startDay: number;
@@ -60,6 +61,7 @@ export interface GetTasksResponseDto {
 
 export interface CreateTaskDto {
   title: string;
+  content?: string;
   startYear: number;
   startMonth: number;
   startDay: number;
@@ -74,6 +76,7 @@ export interface CreateTaskDto {
 
 export interface UpdateTaskDto {
   title?: string;
+  content?: string;
   startYear?: number;
   startMonth?: number;
   startDay?: number;

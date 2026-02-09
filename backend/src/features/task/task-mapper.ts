@@ -15,17 +15,19 @@ function toApiSubTaskStatus(status: any): 'todo' | 'done' {
 }
 
 const CrudTaskApi = (task : any): TaskDto => {
+  const today = new Date();
+  
   return {
     id: task.id,
     projectId: task.projectId,
     title: task.title,
-    startYear: task.startDate.getFullYear(),
-    startMonth: task.startDate.getMonth() + 1,
-    startDay: task.startDate.getDate(),
-
-    endYear: task.endDate.getFullYear(),
-    endMonth: task.endDate.getMonth() + 1,
-    endDay: task.endDate.getDate(),
+    content: task.content || undefined,
+    startYear: task.startDate ? task.startDate.getFullYear() : today.getFullYear(),
+    startMonth: task.startDate ? task.startDate.getMonth() + 1 : today.getMonth() + 1,
+    startDay: task.startDate ? task.startDate.getDate() : today.getDate(),
+    endYear: task.endDate ? task.endDate.getFullYear() : today.getFullYear(),
+    endMonth: task.endDate ? task.endDate.getMonth() + 1 : today.getMonth() + 1,
+    endDay: task.endDate ? task.endDate.getDate() : today.getDate(),
     status: toApiTaskStatus(task.status),
     assignee: task.assignee ? {
       id : task.assignee.id,

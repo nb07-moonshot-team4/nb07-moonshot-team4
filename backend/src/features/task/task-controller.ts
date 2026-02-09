@@ -1,12 +1,7 @@
-import { Request, Response } from "express";
-import prisma from "../../shared/utils/prisma.js";
-import * as taskService from "./task-service.js";
-import {
-  CreateSubTaskDto,
-  CreateTaskDto,
-  UpdateSubTaskDto,
-  UpdateTaskDto,
-} from "./task-dto.js";
+import { Request, Response } from 'express';
+import * as taskService from './task-service.js';
+import { CreateSubTaskDto, CreateTaskDto, UpdateSubTaskDto, UpdateTaskDto } from './task-dto.js';
+import prisma from '../../shared/utils/prisma.js';
 
 export const createTask = async (req: Request, res: Response) => {
   try {
@@ -254,6 +249,42 @@ export async function deleteSubTask(req: Request, res: Response) {
   }
 }
 
+export const createTaskWithAI = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    const userId = req.user.id;
+
+    const projectId = Number(req.params.projectId);
+    const { naturalLanguage } = req.body;
+
+    if (!naturalLanguage || typeof naturalLanguage !== 'string' || naturalLanguage.trim() === '') {
+      return res.status(400).json({ 
+        message: "자연어 입력이 필요합니다. 예: '내일모레 점심에 회의'" 
+      });
+    }
+
+    const result = await taskService.createTaskWithAI(
+      userId,
+      projectId,
+      naturalLanguage.trim()
+    );
+
+    res.status(200).json(result);
+  } catch (error: any) {
+    console.error("AI 태스크 생성 오류:", error);
+
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message });
+    }
+
+    res.status(500).json({ 
+      message: "서버 내부 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
 export const getDashboardTasks = async (req: Request, res: Response) => {
   const { project_id, assignee_id, keyword, status } = req.query;
 

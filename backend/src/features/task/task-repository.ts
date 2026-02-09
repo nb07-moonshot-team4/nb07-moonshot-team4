@@ -23,6 +23,7 @@ function toPrismaTaskStatus(status: "todo" | "in_progress" | "done"): TaskStatus
 
 export function createTask(data: {
   title: string;
+  content?: string;
   startDate?: Date | null;
   endDate?: Date | null;
   status: "todo" | "in_progress" | "done";
@@ -35,6 +36,7 @@ export function createTask(data: {
   return prisma.task.create({
     data: {
       title: data.title,
+      content: data.content,
       startDate: data.startDate,
       endDate: data.endDate,
       status: toPrismaTaskStatus(data.status),
@@ -151,6 +153,7 @@ export async function updateTask(
   taskId: number,
   data: {
     title?: string;
+    content?: string;
     startDate?: Date;
     endDate?: Date;
     status?: "todo" | "in_progress" | "done";
@@ -162,6 +165,7 @@ export async function updateTask(
 ): Promise<TaskWithAssigneeAndTags> {
   const updateData: any = {
     ...(data.title && { title: data.title }),
+    ...(data.content !== undefined && { content: data.content }),
     ...(data.startDate && { startDate: data.startDate }),
     ...(data.endDate && { endDate: data.endDate }),
     ...(data.status && { status: toPrismaTaskStatus(data.status) }),
