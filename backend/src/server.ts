@@ -19,7 +19,6 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/tasks", taskRoutes);
-app.use("/api/tasks", taskRoutes);
 app.use("/api/members", memberRoutes);
 
 app.listen(PORT, () => {
