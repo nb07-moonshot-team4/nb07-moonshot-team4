@@ -3,6 +3,8 @@ import * as taskRepo from './task-repository.js';
 import * as projectRepo from '../project/project-repository.js';
 import { CreateSubTaskDto, CreateTaskDto, GetTasksResponseDto, SubTaskDto,toSubTaskDto, TaskDto, UpdateSubTaskDto, UpdateTaskDto } from './task-dto.js';
 import { SubTaskStatus } from '@prisma/client';
+import * as googleCalendarService from './google-calendar-service.js';
+import { parseNaturalLanguageToTask, convertParsedToCreateTaskDto } from './task-ai-create.js';
 
 export const createTask = async (userId: number, projectId: number, data: CreateTaskDto): Promise<TaskDto> => {
   const targetProject = await projectRepo.getProjectById(projectId);
@@ -29,6 +31,7 @@ export const createTask = async (userId: number, projectId: number, data: Create
 
   const createdTask = await taskRepo.createTask({
     title: data.title,
+    content: data.content,
     projectId: projectId,
     assigneeId: userId, 
     status: taskStatus,
@@ -38,6 +41,22 @@ export const createTask = async (userId: number, projectId: number, data: Create
     startDate: startDate,
     endDate: endDate,
   });
+
+  if (startDate && endDate) {
+    try {
+      await googleCalendarService.createCalendarEvent(
+        userId,
+        createdTask.id,
+        data.title,
+        startDate,
+        endDate,
+        data.content || undefined
+      );
+    } catch (error) {
+      console.error('구글 캘린더 동기화 실패:', error);
+    }
+  }
+
   return CrudTaskApi(createdTask);
 };
 
@@ -130,6 +149,7 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
     }
     updateData.title = data.title;
   }
+  if (data.content !== undefined) updateData.content = data.content;
   if (data.status) updateData.status = data.status;
   if (data.attachments) updateData.attachments = data.attachments;
   if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
@@ -152,6 +172,36 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
   }
 
   const updatedTask = await taskRepo.updateTask(taskId, updateData);
+
+  if (existingTask.googleEventId && startDate && endDate) {
+    try {
+      await googleCalendarService.updateCalendarEvent(
+        userId,
+        taskId,
+        existingTask.googleEventId,
+        updateData.title || existingTask.title,
+        startDate,
+        endDate,
+        updateData.content !== undefined ? updateData.content : existingTask.content || undefined
+      );
+    } catch (error) {
+      console.error('구글 캘린더 업데이트 실패:', error);
+    }
+  } else if (!existingTask.googleEventId && startDate && endDate) {
+    try {
+      await googleCalendarService.createCalendarEvent(
+        userId,
+        taskId,
+        updateData.title || existingTask.title,
+        startDate,
+        endDate,
+        updateData.content !== undefined ? updateData.content : existingTask.content || undefined
+      );
+    } catch (error) {
+      console.error('구글 캘린더 생성 실패:', error);
+    }
+  }
+
   return CrudTaskApi(updatedTask);
 };
 
@@ -165,6 +215,17 @@ export const deleteTask = async (taskId: number, userId: number) => {
   const isProjectMember = await projectRepo.isProjectMember(userId, existingTask.projectId);
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
+  }
+
+  if (existingTask.googleEventId) {
+    try {
+      await googleCalendarService.deleteCalendarEvent(
+        userId,
+        existingTask.googleEventId
+      );
+    } catch (error) {
+      console.error('구글 캘린더 삭제 실패:', error);
+    }
   }
 
   await taskRepo.deleteTask(taskId);
@@ -254,4 +315,74 @@ export const deleteSubTask = async (userId: number, subTaskId: number) => {
 
   await taskRepo.deleteSubTask(subTaskId);
   return { message: "성공적으로 삭제되었습니다" };
+};
+
+export const createTaskWithAI = async (
+  userId: number,
+  projectId: number,
+  naturalLanguage: string
+): Promise<TaskDto> => {
+  const targetProject = await projectRepo.getProjectById(projectId);
+  if (!targetProject) {
+    throw { status: 400, message: "잘못된 요청 형식" };
+  }
+  const isProjectMember = await projectRepo.isProjectMember(userId, projectId);
+  if (!isProjectMember) {
+    throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
+  }
+
+  const parsedInput = await parseNaturalLanguageToTask(naturalLanguage);
+  
+  if (!parsedInput.title || parsedInput.title.trim() === '') {
+    throw { status: 400, message: "제목은 필수입니다" };
+  }
+
+  const startDate = new Date(
+    parsedInput.startYear, 
+    parsedInput.startMonth - 1, 
+    parsedInput.startDay,
+    parsedInput.startHour || 9,
+    parsedInput.startMinute || 0
+  );
+  const endDate = new Date(
+    parsedInput.endYear, 
+    parsedInput.endMonth || parsedInput.startMonth, 
+    parsedInput.endDay || parsedInput.startDay,
+    parsedInput.endHour || (parsedInput.startHour || 9) + 1,
+    parsedInput.endMinute || parsedInput.startMinute || 0
+  );
+
+  if (endDate < startDate) {
+    throw { status: 400, message: "종료일이 시작일보다 빠를 수 없습니다" };
+  }
+
+  const createdTask = await taskRepo.createTask({
+    title: parsedInput.title,
+    content: parsedInput.content,
+    projectId: projectId,
+    assigneeId: userId,
+    status: 'todo',
+    attachments: parsedInput.attachments || [],
+    tags: parsedInput.tags || [],
+    subTasks: parsedInput.subTasks || [],
+    startDate: startDate,
+    endDate: endDate,
+  });
+
+  if (startDate && endDate) {
+    try {
+      await googleCalendarService.createCalendarEvent(
+        userId,
+        createdTask.id,
+        parsedInput.title,
+        startDate,
+        endDate,
+        parsedInput.content || undefined
+      );
+    } catch (error) {
+      console.error('구글 캘린더 동기화 실패:', error);
+    }
+  }
+
+  return CrudTaskApi(createdTask);
 };
