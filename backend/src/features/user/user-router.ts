@@ -7,6 +7,6 @@ const router = Router();
 router.get('/me', userMiddleware, userController.getMyInfo);
 router.patch('/me', userMiddleware, userController.UpdateMyInfo);
 router.get('/me/projects', userMiddleware, userController.getMyProjects);
-router.get('/me/todos', userMiddleware, userController.getMyTodos);
+router.get('/me/tasks', userMiddleware, userController.getMyTodos);
 
 export default router;
