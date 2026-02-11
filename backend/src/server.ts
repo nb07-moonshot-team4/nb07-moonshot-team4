@@ -6,6 +6,7 @@ import taskRoutes from "./features/task/task-routes.js";
 import { errorHandler } from "./error/error-handler.js";
 import memberRoutes from "./features/member/member-router.js";
 import userRouter from './features/user/user-router.js'
+import projectRouter from './features/project/project-router.js'
 dotenv.config();
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/members", memberRoutes);
 app.use('/users', userRouter);
+app.use("/projects", projectRouter);
 
 app.listen(PORT, () => {
   console.log(`서버 시작 중 ... : http://localhost:${PORT}`);
