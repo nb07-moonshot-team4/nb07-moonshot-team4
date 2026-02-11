@@ -1,6 +1,5 @@
 node_modules
 # Keep environment variables out of version control
-dist/          # 📍 빌드 결과물 제외
 .env
 
 /src/generated/prisma
