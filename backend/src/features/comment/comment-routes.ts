@@ -10,11 +10,11 @@ import { authMiddleware } from "../auth/auth-middleware.js";
 
 const router = Router();
 
-router.post("/:taskId/comments", authMiddleware, createComment);
-router.get("/:taskId/comments", getCommentsByTask);
+router.post("/tasks/:taskId/comments", authMiddleware, createComment);
+router.get("/tasks/:taskId/comments", getCommentsByTask);
 
-router.get("/:commentId", authMiddleware, getCommentById);
-router.patch("/:commentId", authMiddleware, updateComment);
-router.delete("/:commentId", authMiddleware, deleteComment);
+router.get("/comments/:commentId", authMiddleware, getCommentById);
+router.patch("/comments/:commentId", authMiddleware, updateComment);
+router.delete("/comments/:commentId", authMiddleware, deleteComment);
 
 export default router;

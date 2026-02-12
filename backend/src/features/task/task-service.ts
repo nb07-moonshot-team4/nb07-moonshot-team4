@@ -1,12 +1,28 @@
-import CrudTaskApi from './task-mapper.js';
-import * as taskRepo from './task-repository.js';
-import * as projectRepo from '../project/project-repository.js';
-import { CreateSubTaskDto, CreateTaskDto, GetTasksResponseDto, SubTaskDto,toSubTaskDto, TaskDto, UpdateSubTaskDto, UpdateTaskDto } from './task-dto.js';
-import { SubTaskStatus } from '@prisma/client';
-import * as googleCalendarService from './google-calendar-service.js';
-import { parseNaturalLanguageToTask, convertParsedToCreateTaskDto } from './task-ai-create.js';
+import CrudTaskApi from "./task-mapper.js";
+import * as taskRepo from "./task-repository.js";
+import * as projectRepo from "../project/project-repository.js";
+import {
+  CreateSubTaskDto,
+  CreateTaskDto,
+  GetTasksResponseDto,
+  SubTaskDto,
+  toSubTaskDto,
+  TaskDto,
+  UpdateSubTaskDto,
+  UpdateTaskDto,
+} from "./task-dto.js";
+import { SubTaskStatus } from "@prisma/client";
+import * as googleCalendarService from "./google-calendar-service.js";
+import {
+  parseNaturalLanguageToTask,
+  convertParsedToCreateTaskDto,
+} from "./task-ai-create.js";
 
-export const createTask = async (userId: number, projectId: number, data: CreateTaskDto): Promise<TaskDto> => {
+export const createTask = async (
+  userId: number,
+  projectId: number,
+  data: CreateTaskDto,
+): Promise<TaskDto> => {
   const targetProject = await projectRepo.getProjectById(projectId);
   if (!targetProject) {
     throw { status: 400, message: "잘못된 요청 형식" };
@@ -16,24 +32,28 @@ export const createTask = async (userId: number, projectId: number, data: Create
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
 
-  if (!data.title || data.title.trim() === '') {
+  if (!data.title || data.title.trim() === "") {
     throw { status: 400, message: "제목은 필수입니다" };
   }
 
-  const startDate = new Date(data.startYear, data.startMonth - 1, data.startDay);
+  const startDate = new Date(
+    data.startYear,
+    data.startMonth - 1,
+    data.startDay,
+  );
   const endDate = new Date(data.endYear, data.endMonth - 1, data.endDay);
 
   if (endDate < startDate) {
     throw { status: 400, message: "종료일이 시작일보다 빠를 수 없습니다" };
   }
 
-  const taskStatus = data.status || 'todo';
+  const taskStatus = data.status || "todo";
 
   const createdTask = await taskRepo.createTask({
     title: data.title,
     content: data.content,
     projectId: projectId,
-    assigneeId: userId, 
+    assigneeId: userId,
     status: taskStatus,
     attachments: data.attachments,
     tags: data.tags,
@@ -50,10 +70,10 @@ export const createTask = async (userId: number, projectId: number, data: Create
         data.title,
         startDate,
         endDate,
-        data.content || undefined
+        data.content || undefined,
       );
     } catch (error) {
-      console.error('구글 캘린더 동기화 실패:', error);
+      console.error("구글 캘린더 동기화 실패:", error);
     }
   }
 
@@ -69,16 +89,15 @@ export const getTasksByProjectId = async (
     status?: "todo" | "in_progress" | "done";
     assigneeId?: number;
     keyword?: string;
-    order?: 'asc' | 'desc';
-    orderBy?: 'created_at' | 'name' | 'end_date';
-  }
+    order?: "asc" | "desc";
+    orderBy?: "created_at" | "name" | "end_date";
+  },
 ): Promise<GetTasksResponseDto> => {
-
   const targetProject = await projectRepo.getProjectById(projectId);
   if (!targetProject) {
     throw { status: 400, message: "잘못된 요청 형식" };
   }
- 
+
   const isProjectMember = await projectRepo.isProjectMember(userId, projectId);
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
@@ -86,11 +105,12 @@ export const getTasksByProjectId = async (
   const skip = (page - 1) * limit;
   const take = limit;
 
-  let prismaOrderByField: 'createdAt' | 'title' | 'endDate' | undefined;
+  let prismaOrderByField: "createdAt" | "title" | "endDate" | undefined;
   if (queryFilters?.orderBy) {
-    if (queryFilters.orderBy === 'created_at') prismaOrderByField = 'createdAt';
-    else if (queryFilters.orderBy === 'name') prismaOrderByField = 'title';
-    else if (queryFilters.orderBy === 'end_date') prismaOrderByField = 'endDate';
+    if (queryFilters.orderBy === "created_at") prismaOrderByField = "createdAt";
+    else if (queryFilters.orderBy === "name") prismaOrderByField = "title";
+    else if (queryFilters.orderBy === "end_date")
+      prismaOrderByField = "endDate";
   }
 
   const tasks = await taskRepo.getTasksByProjectId(projectId, {
@@ -114,9 +134,12 @@ export const getTasksByProjectId = async (
   };
 };
 
-export const getTask = async (userId: number, taskId: number): Promise<TaskDto> => {
+export const getTask = async (
+  userId: number,
+  taskId: number,
+): Promise<TaskDto> => {
   const task = await taskRepo.getTaskById(taskId);
-  
+
   if (!task) {
     throw { status: 400, message: "잘못된 요청 형식" };
   }
@@ -129,22 +152,29 @@ export const getTask = async (userId: number, taskId: number): Promise<TaskDto> 
   return CrudTaskApi(task);
 };
 
-export const updateTask = async (taskId: number, userId: number, data: UpdateTaskDto): Promise<TaskDto> => {
+export const updateTask = async (
+  taskId: number,
+  userId: number,
+  data: UpdateTaskDto,
+): Promise<TaskDto> => {
   const existingTask = await taskRepo.getTaskById(taskId);
-  
+
   if (!existingTask) {
     throw { status: 400, message: "잘못된 요청 형식" };
   }
 
-  const isProjectMember = await projectRepo.isProjectMember(userId, existingTask.projectId);
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    existingTask.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
- 
+
   const updateData: any = {};
 
   if (data.title !== undefined) {
-    if (data.title.trim() === '') {
+    if (data.title.trim() === "") {
       throw { status: 400, message: "제목은 필수입니다" };
     }
     updateData.title = data.title;
@@ -156,17 +186,29 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
   if (data.tags) updateData.tags = data.tags;
   if (data.subTasks) updateData.subTasks = data.subTasks;
 
-  if (data.startYear !== undefined && data.startMonth !== undefined && data.startDay !== undefined) {
-    updateData.startDate = new Date(data.startYear, data.startMonth - 1, data.startDay);
+  if (
+    data.startYear !== undefined &&
+    data.startMonth !== undefined &&
+    data.startDay !== undefined
+  ) {
+    updateData.startDate = new Date(
+      data.startYear,
+      data.startMonth - 1,
+      data.startDay,
+    );
   }
 
-  if (data.endYear !== undefined && data.endMonth !== undefined && data.endDay !== undefined) {
+  if (
+    data.endYear !== undefined &&
+    data.endMonth !== undefined &&
+    data.endDay !== undefined
+  ) {
     updateData.endDate = new Date(data.endYear, data.endMonth - 1, data.endDay);
   }
 
   const startDate = updateData.startDate || existingTask.startDate;
   const endDate = updateData.endDate || existingTask.endDate;
-  
+
   if (endDate < startDate) {
     throw { status: 400, message: "종료일이 시작일보다 빠를 수 없습니다" };
   }
@@ -182,10 +224,12 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
         updateData.title || existingTask.title,
         startDate,
         endDate,
-        updateData.content !== undefined ? updateData.content : existingTask.content || undefined
+        updateData.content !== undefined
+          ? updateData.content
+          : existingTask.content || undefined,
       );
     } catch (error) {
-      console.error('구글 캘린더 업데이트 실패:', error);
+      console.error("구글 캘린더 업데이트 실패:", error);
     }
   } else if (!existingTask.googleEventId && startDate && endDate) {
     try {
@@ -195,10 +239,12 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
         updateData.title || existingTask.title,
         startDate,
         endDate,
-        updateData.content !== undefined ? updateData.content : existingTask.content || undefined
+        updateData.content !== undefined
+          ? updateData.content
+          : existingTask.content || undefined,
       );
     } catch (error) {
-      console.error('구글 캘린더 생성 실패:', error);
+      console.error("구글 캘린더 생성 실패:", error);
     }
   }
 
@@ -207,12 +253,15 @@ export const updateTask = async (taskId: number, userId: number, data: UpdateTas
 
 export const deleteTask = async (taskId: number, userId: number) => {
   const existingTask = await taskRepo.getTaskById(taskId);
-  
+
   if (!existingTask) {
     throw { status: 400, message: "잘못된 요청 형식" };
   }
 
-  const isProjectMember = await projectRepo.isProjectMember(userId, existingTask.projectId);
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    existingTask.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
@@ -221,10 +270,10 @@ export const deleteTask = async (taskId: number, userId: number) => {
     try {
       await googleCalendarService.deleteCalendarEvent(
         userId,
-        existingTask.googleEventId
+        existingTask.googleEventId,
       );
     } catch (error) {
-      console.error('구글 캘린더 삭제 실패:', error);
+      console.error("구글 캘린더 삭제 실패:", error);
     }
   }
 
@@ -232,18 +281,20 @@ export const deleteTask = async (taskId: number, userId: number) => {
   return { message: "성공적으로 삭제되었습니다" };
 };
 
-
 export const createSubTask = async (
   userId: number,
   taskId: number,
-  data: CreateSubTaskDto
+  data: CreateSubTaskDto,
 ): Promise<SubTaskDto> => {
   const parentTask = await taskRepo.getTaskById(taskId);
   if (!parentTask) {
     throw { status: 404, message: "할 일을 찾을 수 없습니다" };
   }
 
-  const isProjectMember = await projectRepo.isProjectMember(userId, parentTask.projectId);
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    parentTask.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
@@ -256,21 +307,46 @@ export const createSubTask = async (
   return toSubTaskDto(created);
 };
 
+export async function getSubTasksByTaskId(
+  userId: number,
+  taskId: number,
+): Promise<SubTaskDto[]> {
+  const parentTask = await taskRepo.getTaskById(taskId);
+  if (!parentTask) {
+    throw { status: 404, message: "할 일을 찾을 수 없습니다" };
+  }
+
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    parentTask.projectId,
+  );
+  if (!isProjectMember) {
+    throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
+  }
+
+  const subTasks = await taskRepo.getSubTasksByTaskId(taskId);
+
+  return subTasks.map((subTask) => toSubTaskDto(subTask));
+}
+
 export const updateSubTask = async (
   userId: number,
   subTaskId: number,
-  data: UpdateSubTaskDto
+  data: UpdateSubTaskDto,
 ): Promise<SubTaskDto> => {
   const existing = await taskRepo.getSubTaskById(subTaskId);
   if (!existing) {
     throw { status: 404, message: "할 일을 찾을 수 없습니다" };
   }
 
-  const isProjectMember = await projectRepo.isProjectMember(userId, existing.task.projectId);
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    existing.task.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
- 
+
   const patch: { title?: string; status?: SubTaskStatus } = {};
 
   if (data.title !== undefined) {
@@ -287,13 +363,19 @@ export const updateSubTask = async (
   const updated = await taskRepo.updateSubTask(subTaskId, patch);
   return toSubTaskDto(updated);
 };
- export const getSubTask = async (userId: number, subTaskId: number): Promise<SubTaskDto> => {
+export const getSubTask = async (
+  userId: number,
+  subTaskId: number,
+): Promise<SubTaskDto> => {
   const subTask = await taskRepo.getSubTaskById(subTaskId);
   if (!subTask) {
     throw { status: 404, message: "할 일을 찾을 수 없습니다" };
   }
 
-  const isProjectMember = await projectRepo.isProjectMember(userId, subTask.task.projectId);
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    subTask.task.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
@@ -301,14 +383,16 @@ export const updateSubTask = async (
   return toSubTaskDto(subTask);
 };
 
-
 export const deleteSubTask = async (userId: number, subTaskId: number) => {
   const existing = await taskRepo.getSubTaskById(subTaskId);
   if (!existing) {
     throw { status: 404, message: "할 일을 찾을 수 없습니다" };
   }
- 
-  const isProjectMember = await projectRepo.isProjectMember(userId, existing.task.projectId);
+
+  const isProjectMember = await projectRepo.isProjectMember(
+    userId,
+    existing.task.projectId,
+  );
   if (!isProjectMember) {
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
@@ -320,7 +404,7 @@ export const deleteSubTask = async (userId: number, subTaskId: number) => {
 export const createTaskWithAI = async (
   userId: number,
   projectId: number,
-  naturalLanguage: string
+  naturalLanguage: string,
 ): Promise<TaskDto> => {
   const targetProject = await projectRepo.getProjectById(projectId);
   if (!targetProject) {
@@ -332,24 +416,24 @@ export const createTaskWithAI = async (
   }
 
   const parsedInput = await parseNaturalLanguageToTask(naturalLanguage);
-  
-  if (!parsedInput.title || parsedInput.title.trim() === '') {
+
+  if (!parsedInput.title || parsedInput.title.trim() === "") {
     throw { status: 400, message: "제목은 필수입니다" };
   }
 
   const startDate = new Date(
-    parsedInput.startYear, 
-    parsedInput.startMonth - 1, 
+    parsedInput.startYear,
+    parsedInput.startMonth - 1,
     parsedInput.startDay,
     parsedInput.startHour || 9,
-    parsedInput.startMinute || 0
+    parsedInput.startMinute || 0,
   );
   const endDate = new Date(
-    parsedInput.endYear, 
-    parsedInput.endMonth || parsedInput.startMonth, 
+    parsedInput.endYear,
+    parsedInput.endMonth || parsedInput.startMonth,
     parsedInput.endDay || parsedInput.startDay,
     parsedInput.endHour || (parsedInput.startHour || 9) + 1,
-    parsedInput.endMinute || parsedInput.startMinute || 0
+    parsedInput.endMinute || parsedInput.startMinute || 0,
   );
 
   if (endDate < startDate) {
@@ -361,7 +445,7 @@ export const createTaskWithAI = async (
     content: parsedInput.content,
     projectId: projectId,
     assigneeId: userId,
-    status: 'todo',
+    status: "todo",
     attachments: parsedInput.attachments || [],
     tags: parsedInput.tags || [],
     subTasks: parsedInput.subTasks || [],
@@ -377,10 +461,10 @@ export const createTaskWithAI = async (
         parsedInput.title,
         startDate,
         endDate,
-        parsedInput.content || undefined
+        parsedInput.content || undefined,
       );
     } catch (error) {
-      console.error('구글 캘린더 동기화 실패:', error);
+      console.error("구글 캘린더 동기화 실패:", error);
     }
   }
 

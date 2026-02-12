@@ -10,7 +10,9 @@ type TaskWithAssigneeAndTags = Prisma.TaskGetPayload<{
   };
 }>;
 
-function toPrismaTaskStatus(status: "todo" | "in_progress" | "done"): TaskStatus {
+function toPrismaTaskStatus(
+  status: "todo" | "in_progress" | "done",
+): TaskStatus {
   switch (status) {
     case "todo":
       return TaskStatus.TODO;
@@ -60,7 +62,9 @@ export function createTask(data: {
         create: data.tags.map((tagName) => ({
           tag: {
             connectOrCreate: {
-              where: { projectId_name: { projectId: data.projectId, name: tagName } },
+              where: {
+                projectId_name: { projectId: data.projectId, name: tagName },
+              },
               create: { projectId: data.projectId, name: tagName },
             },
           },
@@ -85,16 +89,16 @@ export function getTasksByProjectId(
     order,
     orderBy,
     skip = 0,
-    take = 10
+    take = 10,
   }: {
-    status?: "todo" | "in_progress" | "done",
-    assigneeId?: number,
-    keyword?: string,
-    order?: 'asc' | 'desc',
-    orderBy?: 'createdAt' | 'title' | 'endDate',
-    skip?: number,
-    take?: number
-  }
+    status?: "todo" | "in_progress" | "done";
+    assigneeId?: number;
+    keyword?: string;
+    order?: "asc" | "desc";
+    orderBy?: "createdAt" | "title" | "endDate";
+    skip?: number;
+    take?: number;
+  },
 ): Promise<TaskWithAssigneeAndTags[]> {
   const where: Prisma.TaskWhereInput = { projectId };
   if (status) where.status = toPrismaTaskStatus(status);
@@ -103,7 +107,7 @@ export function getTasksByProjectId(
 
   return prisma.task.findMany({
     where,
-    orderBy: orderBy ? { [orderBy]: order || 'asc' } : { createdAt: 'desc' },
+    orderBy: orderBy ? { [orderBy]: order || "asc" } : { createdAt: "desc" },
     include: {
       assignee: true,
       tags: { include: { tag: true } },
@@ -116,16 +120,16 @@ export function getTasksByProjectId(
 }
 
 export function countTasksByProjectId(
-   projectId: number,
+  projectId: number,
   {
     status,
     assigneeId,
     keyword,
   }: {
-    status?: "todo" | "in_progress" | "done",
-    assigneeId?: number,
-    keyword?: string,
-  }
+    status?: "todo" | "in_progress" | "done";
+    assigneeId?: number;
+    keyword?: string;
+  },
 ): Promise<number> {
   const where: Prisma.TaskWhereInput = { projectId };
   if (status) where.status = toPrismaTaskStatus(status);
@@ -137,7 +141,9 @@ export function countTasksByProjectId(
   });
 }
 
-export function getTaskById(taskId: number): Promise<TaskWithAssigneeAndTags | null> {
+export function getTaskById(
+  taskId: number,
+): Promise<TaskWithAssigneeAndTags | null> {
   return prisma.task.findUnique({
     where: { id: taskId },
     include: {
@@ -148,6 +154,17 @@ export function getTaskById(taskId: number): Promise<TaskWithAssigneeAndTags | n
     },
   });
 }
+
+export const getSubTasksByTaskId = async (taskId: number) => {
+  return await prisma.subTask.findMany({
+    where: {
+      taskId: taskId,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+};
 
 export async function updateTask(
   taskId: number,
@@ -161,7 +178,7 @@ export async function updateTask(
     assigneeId?: number | null;
     tags?: string[];
     subTasks?: string[];
-  }
+  },
 ): Promise<TaskWithAssigneeAndTags> {
   const updateData: any = {
     ...(data.title && { title: data.title }),
@@ -206,7 +223,9 @@ export async function updateTask(
       create: data.tags.map((tagName) => ({
         tag: {
           connectOrCreate: {
-            where: { projectId_name: { projectId: existing.projectId, name: tagName } },
+            where: {
+              projectId_name: { projectId: existing.projectId, name: tagName },
+            },
             create: { projectId: existing.projectId, name: tagName },
           },
         },
@@ -240,7 +259,10 @@ export function deleteTask(taskId: number): Promise<TaskWithAssigneeAndTags> {
 
 type SubTaskWithTask = Prisma.SubTaskGetPayload<{ include: { task: true } }>;
 
-export function createSubTask(taskId: number, title: string): Promise<SubTaskWithTask> {
+export function createSubTask(
+  taskId: number,
+  title: string,
+): Promise<SubTaskWithTask> {
   return prisma.subTask.create({
     data: {
       taskId,
@@ -251,7 +273,9 @@ export function createSubTask(taskId: number, title: string): Promise<SubTaskWit
   });
 }
 
-export function getSubTaskById(subTaskId: number): Promise<SubTaskWithTask | null> {
+export function getSubTaskById(
+  subTaskId: number,
+): Promise<SubTaskWithTask | null> {
   return prisma.subTask.findUnique({
     where: { id: subTaskId },
     include: { task: true },
@@ -260,7 +284,7 @@ export function getSubTaskById(subTaskId: number): Promise<SubTaskWithTask | nul
 
 export function updateSubTask(
   subTaskId: number,
-  data: { title?: string; status?: SubTaskStatus }
+  data: { title?: string; status?: SubTaskStatus },
 ): Promise<SubTaskWithTask> {
   return prisma.subTask.update({
     where: { id: subTaskId },

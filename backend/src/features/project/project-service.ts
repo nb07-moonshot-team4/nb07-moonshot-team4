@@ -1,9 +1,7 @@
-import { prisma } from "../../prisma/prisma-client.js";
+import prisma from "../../shared/utils/prisma.js";
 
-export const createProject = async (
-  userId: number,
-  body: { name: string; description: string }
-) => {
+export const createProject = async (userId: number, body: { name: string; description: string },) => {
+
   const project = await prisma.project.create({
     data: {
       name: body.name,
@@ -13,6 +11,7 @@ export const createProject = async (
         create: {
           userId: userId,
           role: "ADMIN",
+          status: "ACTIVE",
         },
       },
     },
@@ -82,9 +81,8 @@ export const getProjectById = async (projectId: number) => {
 
 export const updateProject = async (
   projectId: number,
-  body: { name?: string; description?: string }
+  body: { name?: string; description?: string },
 ) => {
-
   if (!body.name && !body.description) {
     throw { status: 400, message: "잘못된 데이터 형식" };
   }
@@ -93,15 +91,15 @@ export const updateProject = async (
     where: { id: projectId },
     data: {
       ...(body.name && { name: body.name }),
-      ...(body.description && { description: body.description })
-    }
+      ...(body.description && { description: body.description }),
+    },
   });
 
   return updated;
 };
 
-export const deleteProject = async (projectId:number) => {
-    await prisma.project.delete({
-        where: {id: projectId}
-    });
+export const deleteProject = async (projectId: number) => {
+  await prisma.project.delete({
+    where: { id: projectId },
+  });
 };
