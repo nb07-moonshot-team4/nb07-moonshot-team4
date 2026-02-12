@@ -1,4 +1,4 @@
-import { prisma } from "../../prisma/prisma-client.js"
+import prisma from "../../shared/utils/prisma.js";
 import { MemberStatus, Role } from "@prisma/client";
 
 function generateInvitationId(): string {
@@ -23,7 +23,6 @@ export class MemberRepo {
     });
     return !!row;
   }
-
 
   async findActiveMember(projectId: number, userId: number) {
     return prisma.projectMember.findFirst({
@@ -75,7 +74,6 @@ export class MemberRepo {
       data: { status: MemberStatus.LEFT },
     });
   }
-
 
   async findUserByEmail(email: string) {
     return prisma.user.findUnique({
@@ -135,7 +133,7 @@ export class MemberRepo {
     return map;
   }
 
-  //todo invitationId String? @unique 스키마 유니크키 변경 
+  //todo invitationId String? @unique 스키마 유니크키 변경
   async findMemberByInvitationId(invitationId: string) {
     return prisma.projectMember.findUnique({
       where: { invitationId },
@@ -147,7 +145,7 @@ export class MemberRepo {
       },
     });
   }
-  //초대수락 
+  //초대수락
   async acceptInvitation(invitationId: string) {
     await prisma.projectMember.update({
       where: { invitationId },
@@ -170,4 +168,3 @@ export class MemberRepo {
     });
   }
 }
-
