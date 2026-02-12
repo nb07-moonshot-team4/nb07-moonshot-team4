@@ -105,8 +105,7 @@ googleLogin: (req: Request, res: Response) => {
             'https://www.googleapis.com/auth/calendar' // 캘린더 팀원을 위한 권한
         ].join(' ');
     // 구글 인증 화면 URL 생성
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=email%20profile`;
-
+const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=${encodeURIComponent(scope)}`;
     // 사용자를 구글 로그인 페이지로 보냄
     res.redirect(googleAuthUrl);
 },
