@@ -49,12 +49,11 @@ export const createInvitation = async (req: Request, res: Response) => {
   if (!email || !email.includes("@")) {
     throw new BadRequestError("잘못된 요청 형식");
   }
-  const { invitationId } = await service.createInvitation(user.id, projectId, email);
+  const dto = await service.createInvitation(user.id, projectId, email);
   if (process.env.NODE_ENV !== "production") {
-    console.log(`[DEV] invitationId=${invitationId} projectId=${projectId} email=${email}`);
+    console.log(`[DEV] invitationId=${dto.invitationId} projectId=${projectId} email=${email}`);
   }
-
-  return res.status(201).json({ invitationId });
+  return res.status(201).json(dto);
 };
 
 //POST/invitations/:invitationId/accept
