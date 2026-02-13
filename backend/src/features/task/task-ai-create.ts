@@ -18,7 +18,7 @@ export interface ParsedTaskInput {
     tags?: string[];
     attachments: string[];
     subTasks: string[];
-    content? : string;
+    description? : string;
 
 }
 
@@ -52,7 +52,7 @@ export async function parseNaturalLanguageToTask(naturalLanguage: string): Promi
 "endMinute": 종료 분 (숫자),
 "subTasks": ["서브 태스크 1", "서브 태스크 2", "서브 태스크 3"],
 "tags": ["태그 1", "태그 2", "태그 3"],
-"content": "추가 설명 (선택적)"
+"description": "추가 설명 (선택적)"
 }
 규칙 : 
 1. 날짜 계산:
@@ -97,7 +97,7 @@ export async function parseNaturalLanguageToTask(naturalLanguage: string): Promi
 -예 : "프로젝트 발표" -> ["프로젝트","발표","중요"]
 -태그는 1-3개 정도가 적당합니다.
 
-6. content (설명) :
+6. description (설명) :
 -자연어 입력에서 추가 정보가 있으면 포함 해주세요.
 -예 : "내일모레 점심에 회의" -> "내일모레 점심에 회의를 위해 회의 안건을 준비해주세요."
 -예 : "다음주 프로젝트 발표 준비" -> "다음주 프로젝트 발표를 위해 발표 자료를 작성해주세요."
@@ -161,7 +161,7 @@ export async function parseNaturalLanguageToTask(naturalLanguage: string): Promi
 export function convertParsedToCreateTaskDto(parsed: ParsedTaskInput): CreateTaskDto {
     return {
         title: parsed.title,
-        content: parsed.content,
+        description: parsed.description,
         startYear: parsed.startYear,
         startMonth: parsed.startMonth,
         startDay: parsed.startDay,

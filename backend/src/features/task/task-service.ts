@@ -51,7 +51,7 @@ export const createTask = async (
 
   const createdTask = await taskRepo.createTask({
     title: data.title,
-    content: data.content,
+    description: data.description,
     projectId: projectId,
     assigneeId: userId,
     status: taskStatus,
@@ -70,7 +70,7 @@ export const createTask = async (
         data.title,
         startDate,
         endDate,
-        data.content || undefined,
+        data.description || undefined,
       );
     } catch (error) {
       console.error("구글 캘린더 동기화 실패:", error);
@@ -179,7 +179,7 @@ export const updateTask = async (
     }
     updateData.title = data.title;
   }
-  if (data.content !== undefined) updateData.content = data.content;
+  if (data.description !== undefined) updateData.description = data.description;
   if (data.status) updateData.status = data.status;
   if (data.attachments) updateData.attachments = data.attachments;
   if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
@@ -224,9 +224,9 @@ export const updateTask = async (
         updateData.title || existingTask.title,
         startDate,
         endDate,
-        updateData.content !== undefined
-          ? updateData.content
-          : existingTask.content || undefined,
+        updateData.description !== undefined
+          ? updateData.description
+          : existingTask.description || undefined,
       );
     } catch (error) {
       console.error("구글 캘린더 업데이트 실패:", error);
@@ -239,9 +239,9 @@ export const updateTask = async (
         updateData.title || existingTask.title,
         startDate,
         endDate,
-        updateData.content !== undefined
-          ? updateData.content
-          : existingTask.content || undefined,
+        updateData.description !== undefined
+          ? updateData.description
+          : existingTask.description || undefined,
       );
     } catch (error) {
       console.error("구글 캘린더 생성 실패:", error);
@@ -278,7 +278,7 @@ export const deleteTask = async (taskId: number, userId: number) => {
   }
 
   await taskRepo.deleteTask(taskId);
-  return { message: "성공적으로 삭제되었습니다" };
+  return null;
 };
 
 export const createSubTask = async (
@@ -288,7 +288,7 @@ export const createSubTask = async (
 ): Promise<SubTaskDto> => {
   const parentTask = await taskRepo.getTaskById(taskId);
   if (!parentTask) {
-    throw { status: 404, message: "할 일을 찾을 수 없습니다" };
+    throw { status: 400, message: "잘못된 요청 형식" };
   }
 
   const isProjectMember = await projectRepo.isProjectMember(
@@ -300,17 +300,18 @@ export const createSubTask = async (
   }
 
   if (!data.title || data.title.trim() === "") {
-    throw { status: 400, message: "제목은 필수입니다" };
+    throw { status: 400, message: "잘못된 요청 형식" };
   }
 
-  const created = await taskRepo.createSubTask(taskId, data.title);
+  const status = data.status || "todo";
+  const created = await taskRepo.createSubTask(taskId, data.title, status);
   return toSubTaskDto(created);
 };
 
 export async function getSubTasksByTaskId(
   userId: number,
   taskId: number,
-): Promise<SubTaskDto[]> {
+): Promise<{ data: SubTaskDto[]; total: number }> {
   const parentTask = await taskRepo.getTaskById(taskId);
   if (!parentTask) {
     throw { status: 404, message: "할 일을 찾을 수 없습니다" };
@@ -326,7 +327,10 @@ export async function getSubTasksByTaskId(
 
   const subTasks = await taskRepo.getSubTasksByTaskId(taskId);
 
-  return subTasks.map((subTask) => toSubTaskDto(subTask));
+  return {
+    data: subTasks.map((subTask) => toSubTaskDto(subTask)),
+    total: subTasks.length,
+  };
 }
 
 export const updateSubTask = async (
@@ -347,17 +351,13 @@ export const updateSubTask = async (
     throw { status: 403, message: "프로젝트 멤버가 아닙니다" };
   }
 
-  const patch: { title?: string; status?: SubTaskStatus } = {};
+  const patch: { title?: string } = {};
 
   if (data.title !== undefined) {
     if (data.title.trim() === "") {
-      throw { status: 400, message: "제목은 필수입니다" };
+      throw { status: 400, message: "잘못된 요청 형식" };
     }
     patch.title = data.title;
-  }
-
-  if (data.done !== undefined) {
-    patch.status = data.done ? SubTaskStatus.DONE : SubTaskStatus.TODO;
   }
 
   const updated = await taskRepo.updateSubTask(subTaskId, patch);
@@ -398,7 +398,7 @@ export const deleteSubTask = async (userId: number, subTaskId: number) => {
   }
 
   await taskRepo.deleteSubTask(subTaskId);
-  return { message: "성공적으로 삭제되었습니다" };
+  return null;
 };
 
 export const createTaskWithAI = async (
@@ -442,7 +442,7 @@ export const createTaskWithAI = async (
 
   const createdTask = await taskRepo.createTask({
     title: parsedInput.title,
-    content: parsedInput.content,
+    description: parsedInput.description,
     projectId: projectId,
     assigneeId: userId,
     status: "todo",
@@ -461,7 +461,7 @@ export const createTaskWithAI = async (
         parsedInput.title,
         startDate,
         endDate,
-        parsedInput.content || undefined,
+        parsedInput.description || undefined,
       );
     } catch (error) {
       console.error("구글 캘린더 동기화 실패:", error);

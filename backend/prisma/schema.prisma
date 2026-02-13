@@ -38,6 +38,7 @@ enum Priority {
 
 enum SubTaskStatus {
   TODO
+  IN_PROGRESS
   DONE
 }
 
@@ -137,7 +138,7 @@ model Task {
   googleEventId String?
 
   title       String
-  content     String?    @db.Text
+  description String?    @db.Text
 
   startDate   DateTime?
   endDate     DateTime?

@@ -8,7 +8,7 @@ router.get('/projects/:projectId/tasks', authMiddleware, taskController.getTasks
 router.post('/projects/:projectId/tasks', authMiddleware, taskController.createTask);
 
 router.get('/tasks/:taskId', authMiddleware, taskController.getTask);
-router.put('/tasks/:taskId', authMiddleware, taskController.updateTask);
+router.patch('/tasks/:taskId', authMiddleware, taskController.updateTask);
 router.delete('/tasks/:taskId', authMiddleware, taskController.deleteTask);
 
 router.post('/tasks/:taskId/subtasks', authMiddleware, taskController.createSubTask);

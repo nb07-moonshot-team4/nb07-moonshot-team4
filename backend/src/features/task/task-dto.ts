@@ -2,7 +2,7 @@ export interface TaskDto {
   id: number;
   projectId: number;
   title: string;
-  content?: string;
+  description?: string;
   startYear: number;
   startMonth: number;
   startDay: number;
@@ -22,6 +22,7 @@ export interface TaskDto {
 export function mapSubTaskStatusToDto(status: any): SubTaskDto["status"] {
   const v = String(status).toUpperCase();
   if (v === "DONE") return "done";
+  if (v === "IN_PROGRESS") return "in_progress";
   return "todo";
 }
 
@@ -40,18 +41,31 @@ export interface SubTaskDto {
   id: number;
   taskId: number;
   title: string;
-  status: 'todo' | 'done';
+  status: 'todo' | 'in_progress' | 'done';
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CreateSubTaskDto {
   title: string;
+  startYear?: number;
+  startMonth?: number;
+  startDay?: number;
+  endYear?: number;
+  endMonth?: number;
+  endDay?: number;
+  status?: 'todo' | 'in_progress' | 'done';
+  tags?: string[];
+  attachments?: string[];
 }
 
 export interface UpdateSubTaskDto {
   title?: string;
-  done?: boolean;
+}
+
+export interface GetSubTasksResponseDto {
+  data: SubTaskDto[];
+  total: number;
 }
 
 export interface GetTasksResponseDto {
@@ -61,7 +75,7 @@ export interface GetTasksResponseDto {
 
 export interface CreateTaskDto {
   title: string;
-  content?: string;
+  description?: string;
   startYear: number;
   startMonth: number;
   startDay: number;
@@ -76,7 +90,7 @@ export interface CreateTaskDto {
 
 export interface UpdateTaskDto {
   title?: string;
-  content?: string;
+  description?: string;
   startYear?: number;
   startMonth?: number;
   startDay?: number;
