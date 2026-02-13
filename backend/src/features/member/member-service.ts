@@ -5,20 +5,22 @@ import {
     NotFoundError,
 } from "../../error/errors.js";
 import { MemberStatus } from "@prisma/client";
+import type {
+    ProjectMemberListItemDto,
+    ProjectMemberListResponseDto,
+    CreateInvitationResponseDto,
+    ProjectMemberStatusDto,
+} from "./member-dto.js";
 
 export class MemberService {
     private repo = new MemberRepo();
 
-    private toApiStatus(status: MemberStatus): "pending" | "accepted" | "rejected" {
+    private toApiStatus(status: MemberStatus): ProjectMemberStatusDto {
         switch (status) {
-            case "INVITED":
-                return "pending";
-            case "ACTIVE":
-                return "accepted";
-            case "REJECTED":
-                return "rejected";
-            default:
-                return "rejected";
+            case "INVITED": return "pending";
+            case "ACTIVE": return "accepted";
+            case "REJECTED": return "rejected";
+            case "LEFT": return "rejected";
         }
     }
 
@@ -46,11 +48,29 @@ export class MemberService {
         if (actor.role !== "OWNER") throw new ForbiddenError("권한이 없습니다.");
         return actor;
     }
+    private toListItemDto(
+        m: {
+            userId: number;
+            status: MemberStatus;
+            invitationId: string | null;
+            user: { id: number; name: string; email: string; profileImage: string | null };
+        },
+        taskCount: number
+    ): ProjectMemberListItemDto {
+        return {
+            id: m.user.id,
+            name: m.user.name,
+            email: m.user.email,
+            profileImage: m.user.profileImage ?? null,
+            taskCount,
+            status: this.toApiStatus(m.status),
+            invitationId: m.invitationId ?? null,
+        };
+    }
 
     // GET /projects/:projectId/users
-    async listMembers(actorId: number, projectId: number, pageRaw?: string, limitRaw?: string) {
+    async listMembers(actorId: number, projectId: number, pageRaw?: string, limitRaw?: string): Promise<ProjectMemberListResponseDto> {
         await this.requireProject(projectId);
-
         await this.requireActiveMember(projectId, actorId);
 
         const { limit, skip } = this.parsePaging(pageRaw, limitRaw);
@@ -59,15 +79,9 @@ export class MemberService {
         const userIds = rows.map((r) => r.userId);
         const taskCountMap = await this.repo.countTasksByAssignee(projectId, userIds);
 
-        const data = rows.map((m) => ({
-            id: m.user.id,
-            name: m.user.name,
-            email: m.user.email,
-            profileImage: m.user.profileImage ?? null,
-            taskCount: taskCountMap.get(m.userId) ?? 0,
-            status: this.toApiStatus(m.status),
-            invitationId: m.invitationId ?? null,
-        }));
+        const data = rows.map((m) =>
+            this.toListItemDto(m as any, taskCountMap.get(m.userId) ?? 0)
+        );
 
         return { data, total };
     }
@@ -82,11 +96,10 @@ export class MemberService {
     }
 
     // POST /projects/:projectId/invitations
-    async createInvitation(actorId: number, projectId: number, email: string) {
+    async createInvitation(actorId: number, projectId: number, email: string): Promise<CreateInvitationResponseDto> {
         await this.requireProject(projectId);
 
         const actor = await this.requireActiveMember(projectId, actorId);
-
         const canInvite = actor.role === "OWNER" || actor.role === "ADMIN";
         if (!canInvite) throw new ForbiddenError("프로젝트 관리자가 아닙니다");
 
@@ -100,7 +113,7 @@ export class MemberService {
     }
 
     // POST /invitations/:invitationId/accept
-    async acceptInvitation(actorId: number, invitationId: string) {
+    async acceptInvitation(actorId: number, invitationId: string): Promise<void> {
         const invited = await this.repo.findMemberByInvitationId(invitationId);
         if (!invited || invited.status !== MemberStatus.INVITED) {
             throw new NotFoundError("유효하지 않은 초대입니다");
@@ -109,7 +122,7 @@ export class MemberService {
     }
 
     // DELETE /invitations/:invitationId
-    async deleteInvitation(actorId: number, invitationId: string) {
+    async deleteInvitation(actorId: number, invitationId: string): Promise<void> {
         const invited = await this.repo.findMemberByInvitationId(invitationId);
         if (!invited || invited.status !== MemberStatus.INVITED) {
             throw new NotFoundError;

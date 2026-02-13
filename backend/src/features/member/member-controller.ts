@@ -14,7 +14,7 @@ function parsePositiveInt(raw: unknown, fieldName: string) {
 
 // GET /projects/:projectId/users
 export const listMembers = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user) throw new UnauthorizedError("로그인이 필요합니다");
 
   const projectId = parsePositiveInt(req.params.projectId, "projectId");
@@ -28,7 +28,7 @@ export const listMembers = async (req: Request, res: Response) => {
 
 // DELETE /projects/:projectId/users/:userId
 export const deleteMember = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user) throw new UnauthorizedError("로그인이 필요합니다");
 
   const projectId = parsePositiveInt(req.params.projectId, "projectId");
@@ -40,7 +40,7 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 // POST /projects/:projectId/invitations
 export const createInvitation = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user) throw new UnauthorizedError("로그인이 필요합니다");
 
   const projectId = parsePositiveInt(req.params.projectId, "projectId");
@@ -49,17 +49,16 @@ export const createInvitation = async (req: Request, res: Response) => {
   if (!email || !email.includes("@")) {
     throw new BadRequestError("잘못된 요청 형식");
   }
-  const { invitationId } = await service.createInvitation(user.id, projectId, email);
+  const dto = await service.createInvitation(user.id, projectId, email);
   if (process.env.NODE_ENV !== "production") {
-    console.log(`[DEV] invitationId=${invitationId} projectId=${projectId} email=${email}`);
+    console.log(`[DEV] invitationId=${dto.invitationId} projectId=${projectId} email=${email}`);
   }
-
-  return res.status(201).json({ invitationId });
+  return res.status(201).json(dto);
 };
 
 //POST/invitations/:invitationId/accept
 export const acceptInvitation = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user) throw new UnauthorizedError("로그인이 필요합니다", "UNAUTHORIZED");
 
   const invitationId = String(req.params.invitationId ?? "").trim();
@@ -72,7 +71,7 @@ export const acceptInvitation = async (req: Request, res: Response) => {
 
 //DELETE/invitations/:invitationId
 export const deleteInvitation = async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user;
   if (!user) throw new UnauthorizedError("로그인이 필요합니다");
   const invitationId = String(req.params.invitationId ?? "").trim();
   if (!invitationId) {
