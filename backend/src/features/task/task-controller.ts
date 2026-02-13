@@ -144,9 +144,9 @@ export async function deleteTask(req: Request, res: Response) {
     const userId = req.user.id;
 
     const taskId = Number(req.params.taskId);
-    const result = await taskService.deleteTask(taskId, userId);
+    await taskService.deleteTask(taskId, userId);
 
-    res.status(200).json(result);
+    res.status(204).send();
   } catch (error: any) {
     console.error(error);
 
@@ -194,7 +194,7 @@ export async function getSubTasksByTaskId(req: Request, res: Response) {
 
     const taskId = Number(req.params.taskId);
     if (isNaN(taskId)) {
-      return res.status(400).json({ message: "유효하지 않은 Task ID입니다" });
+      return res.status(400).json({ message: "유효하지 않은 할 일 입니다" });
     }
 
     const result = await taskService.getSubTasksByTaskId(userId, taskId);
@@ -267,9 +267,9 @@ export async function deleteSubTask(req: Request, res: Response) {
     const userId = req.user.id;
 
     const subTaskId = Number(req.params.subTaskId);
-    const result = await taskService.deleteSubTask(userId, subTaskId);
+    await taskService.deleteSubTask(userId, subTaskId);
 
-    res.status(200).json(result);
+    res.status(204).send();
   } catch (error: any) {
     console.error(error);
 

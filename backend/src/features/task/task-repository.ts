@@ -25,7 +25,7 @@ function toPrismaTaskStatus(
 
 export function createTask(data: {
   title: string;
-  content?: string;
+  description?: string;
   startDate?: Date | null;
   endDate?: Date | null;
   status: "todo" | "in_progress" | "done";
@@ -38,7 +38,7 @@ export function createTask(data: {
   return prisma.task.create({
     data: {
       title: data.title,
-      content: data.content,
+      description: data.description,
       startDate: data.startDate,
       endDate: data.endDate,
       status: toPrismaTaskStatus(data.status),
@@ -170,7 +170,7 @@ export async function updateTask(
   taskId: number,
   data: {
     title?: string;
-    content?: string;
+    description?: string;
     startDate?: Date;
     endDate?: Date;
     status?: "todo" | "in_progress" | "done";
@@ -182,7 +182,7 @@ export async function updateTask(
 ): Promise<TaskWithAssigneeAndTags> {
   const updateData: any = {
     ...(data.title && { title: data.title }),
-    ...(data.content !== undefined && { content: data.content }),
+    ...(data.description !== undefined && { description: data.description }),
     ...(data.startDate && { startDate: data.startDate }),
     ...(data.endDate && { endDate: data.endDate }),
     ...(data.status && { status: toPrismaTaskStatus(data.status) }),
@@ -262,12 +262,28 @@ type SubTaskWithTask = Prisma.SubTaskGetPayload<{ include: { task: true } }>;
 export function createSubTask(
   taskId: number,
   title: string,
+  status: "todo" | "in_progress" | "done" = "todo",
 ): Promise<SubTaskWithTask> {
+  let taskStatus: SubTaskStatus;
+  switch (status) {
+    case "todo":
+      taskStatus = SubTaskStatus.TODO;
+      break;
+    case "in_progress":
+      taskStatus = SubTaskStatus.IN_PROGRESS;
+      break;
+    case "done":
+      taskStatus = SubTaskStatus.DONE;
+      break;
+    default:
+      taskStatus = SubTaskStatus.TODO;
+  }
+
   return prisma.subTask.create({
     data: {
       taskId,
       title,
-      status: SubTaskStatus.TODO,
+      status: taskStatus,
     },
     include: { task: true },
   });

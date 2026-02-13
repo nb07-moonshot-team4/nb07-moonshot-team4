@@ -8,9 +8,10 @@ function toApiTaskStatus(status: any): TaskDto["status"] {
   return "todo";
 }
 
-function toApiSubTaskStatus(status: any): 'todo' | 'done' {
+function toApiSubTaskStatus(status: any): 'todo' | 'in_progress' | 'done' {
   const v = String(status).toUpperCase();
   if (v === "DONE") return "done";
+  if (v === "IN_PROGRESS") return "in_progress";
   return "todo";
 }
 
@@ -21,7 +22,7 @@ const CrudTaskApi = (task : any): TaskDto => {
     id: task.id,
     projectId: task.projectId,
     title: task.title,
-    content: task.content || undefined,
+    description: task.description || undefined,
     startYear: task.startDate ? task.startDate.getFullYear() : today.getFullYear(),
     startMonth: task.startDate ? task.startDate.getMonth() + 1 : today.getMonth() + 1,
     startDay: task.startDate ? task.startDate.getDate() : today.getDate(),
