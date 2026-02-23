@@ -7,12 +7,19 @@ import { errorHandler } from "./error/error-handler.js";
 import memberRoutes from "./features/member/member-routes.js";
 import userRoutes from "./features/user/user-routes.js";
 import projectRoutes from "./features/project/project-routes.js";
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
+
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
 
 
 app.get("/", (req, res) => {
