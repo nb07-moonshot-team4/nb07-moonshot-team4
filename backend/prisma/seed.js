@@ -53,7 +53,7 @@ async function main() {
   const task = await prisma.task.create({
     data: {
       title: "Seed 데이터 연결하기",
-      content: "Prisma Seed 테스트용 Task",
+      description: "Prisma Seed 테스트용 Task",
       projectId: project.id,
       assigneeId: user.id,
       creatorId: user.id,

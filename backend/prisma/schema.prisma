@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -82,7 +82,7 @@ model UserAuthProvider {
 model RefreshToken {
   id        Int       @id @default(autoincrement())
   userId    Int
-  token     String    @unique 
+  token     String    @unique @db.Text
   expiresAt DateTime
   createdAt DateTime  @default(now())
   revokedAt DateTime?
