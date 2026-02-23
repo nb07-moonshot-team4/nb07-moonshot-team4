@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -38,6 +38,7 @@ enum Priority {
 
 enum SubTaskStatus {
   TODO
+  IN_PROGRESS
   DONE
 }
 
@@ -81,7 +82,7 @@ model UserAuthProvider {
 model RefreshToken {
   id        Int       @id @default(autoincrement())
   userId    Int
-  token     String    @unique @db.Text
+  token     String    @unique 
   expiresAt DateTime
   createdAt DateTime  @default(now())
   revokedAt DateTime?
