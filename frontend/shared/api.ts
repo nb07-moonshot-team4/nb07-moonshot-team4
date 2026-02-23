@@ -65,7 +65,7 @@ export const register = async (payload: {
 
 export const refreshToken = async (refreshToken: string | null) => {
   try {
-    const response = await axios.post('/auth/refresh', {
+    const response = await axios.post('/auth/refresh',{}, {
       headers: {
         Authorization: `Bearer ${refreshToken}`,
       },
@@ -75,7 +75,7 @@ export const refreshToken = async (refreshToken: string | null) => {
     logError(error);
     if (error instanceof AxiosError) {
       throw new Error(
-        error.response?.data.message ?? '토큰 갱신 중 오류가 발생했습니다.'
+        error.response?.data.error ?? '토큰 갱신 중 오류가 발생했습니다.'
       );
     }
     throw error;

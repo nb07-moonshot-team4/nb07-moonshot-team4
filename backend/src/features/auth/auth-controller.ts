@@ -72,7 +72,13 @@ login: async (req: Request, res: Response) => {
     // 토큰 갱신 (refresh token 사용)
 refresh: async (req: Request, res: Response) => {
     try{
-        const { refreshToken } = req.body;
+        const authHeader = req.headers.authorization;
+        let refreshToken = authHeader && authHeader.split(' ')[1];
+        if (!refreshToken) {
+            refreshToken = req.body.refreshToken;
+        }
+
+        //const { refreshToken } = req.body;
 
         if(!refreshToken) {
             return res.status(400).json({
