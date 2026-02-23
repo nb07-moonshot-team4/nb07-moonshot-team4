@@ -14,7 +14,7 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
-// health check
+
 app.get("/", (req, res) => {
   res.send("서버 작동중 ......");
 });

@@ -34,8 +34,9 @@ export const login = async (payload: { email: string; password: string }) => {
   } catch (error) {
     logError(error);
     if (error instanceof AxiosError) {
+      
       throw new Error(
-        error.response?.data.message ?? '로그인 중 오류가 발생했습니다.'
+        error.response?.data.error ?? error.response?.data.message ?? '로그인 중 오류가 발생했습니다.'
       );
     }
     throw error;
@@ -298,6 +299,27 @@ export const createTask = async (payload: {
     if (error instanceof AxiosError) {
       throw new Error(
         error.response?.data.message ?? '할 일 생성 중 오류가 발생했습니다.'
+      );
+    }
+    throw error;
+  }
+};
+
+export const createTaskWithAI = async (payload: {
+  projectId: number;
+  naturalLanguage: string;
+}): Promise<Task> => {
+  const { projectId, naturalLanguage } = payload;
+  try {
+    const response = await axios.post(`/projects/${projectId}/tasks/ai`, {
+      naturalLanguage,
+    });
+    return response.data;
+  } catch (error) {
+    logError(error);
+    if (error instanceof AxiosError) {
+      throw new Error(
+        error.response?.data.message ?? 'AI 할 일 생성 중 오류가 발생했습니다.'
       );
     }
     throw error;

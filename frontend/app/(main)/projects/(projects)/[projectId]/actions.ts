@@ -42,6 +42,30 @@ export const createTask = async (
   }
 };
 
+export const createTaskWithAI = async (payload: {
+  projectId: number;
+  naturalLanguage: string;
+}): Promise<ActionResult<Task>> => {
+  try {
+    const task = await api.createTaskWithAI(payload);
+    revalidatePath(`/projects/${payload.projectId}/tasks`);
+    return {
+      success: 'AI 할 일 생성 성공',
+      data: task,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      success: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'AI 할 일 생성 중 오류가 발생했습니다.',
+      data: null,
+    };
+  }
+};
+
 interface UpdateProjectInput {
   name?: string;
   description?: string;
