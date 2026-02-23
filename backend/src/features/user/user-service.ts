@@ -2,6 +2,7 @@ import prisma from "../../shared/utils/prisma.js";
 import { UpdateMyInfoDto } from "./user-dto.js";
 import bcrypt from 'bcrypt';
 import CrudTaskApi from "../task/task-mapper.js";
+import * as taskService from "../task/task-service.js";
 
 export const getMyInfo = async (userId: number) => {
     const getInfo = await prisma.user.findUnique({
@@ -120,55 +121,63 @@ export const getMyTodos = async (
         project_id,
         keyword
     } = query;
-
-    const tasks = await prisma.task.findMany({
-        where: {
-            project: {
-                members: {
-                    some: {
-                        userId,
-                        status: 'ACTIVE'
-                    }
-                }
-            },
-            ...(project_id && {
-                projectId: Number(project_id)
-            }),
-
-            ...(status && {
-                status
-            }),
-
-            ...(assignee_id && {
-                assigneeId: Number(assignee_id)
-            }),
-            ...(from && to && {
-                createdAt: {
-                    gte: new Date(from),
-                    lte: new Date(to)
-                }
-            }),
-            ...(keyword && {
-                title: {
-                    contains: keyword,
-                    mode: 'insensitive'
-                }
-            })
-        },
-        include: {
-            assignee: true,
-            tags: {
-                include: {
-                    tag: true
-                }
-            },
-            attachments: true,
-            subTasks: true
-        },
-        orderBy: {
-            createdAt: 'desc'
-        }
+    return await taskService.getMyTasks(userId, {
+        status: status as "todo" | "in_progress" | "done" | undefined,
+        assigneeId: assignee_id ? Number(assignee_id) : undefined,
+        projectId: project_id ? Number(project_id) : undefined,
+        from,
+        to,
+        keyword
     });
-
-    return tasks.map(task => CrudTaskApi(task));
 };
+    // const tasks = await prisma.task.findMany({
+    //     where: {
+    //         project: {
+    //             members: {
+    //                 some: {
+    //                     userId,
+    //                     status: 'ACTIVE'
+    //                 }
+    //             }
+    //         },
+    //         ...(project_id && {
+    //             projectId: Number(project_id)
+    //         }),
+
+    //         ...(status && {
+    //             status
+    //         }),
+
+    //         ...(assignee_id && {
+    //             assigneeId: Number(assignee_id)
+    //         }),
+    //         ...(from && to && {
+    //             createdAt: {
+    //                 gte: new Date(from),
+    //                 lte: new Date(to)
+    //             }
+    //         }),
+    //         ...(keyword && {
+    //             title: {
+    //                 contains: keyword,
+    //                 mode: 'insensitive'
+    //             }
+    //         })
+    //     },
+    //     include: {
+    //         assignee: true,
+    //         tags: {
+    //             include: {
+    //                 tag: true
+    //             }
+    //         },
+    //         attachments: true,
+    //         subTasks: true
+    //     },
+    //     orderBy: {
+    //         createdAt: 'desc'
+    //     }
+    // });
+
+    //return tasks.map(task => CrudTaskApi(task));
+

@@ -14,6 +14,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const allowedOrigins = [
   'http://localhost:3000', 
+  'http://localhost:3001',
   'https://nb07-moonshot-team4.vercel.app', // 
   'https://nb07-moonshot-team4-x6qn.onrender.com' 
 ];
