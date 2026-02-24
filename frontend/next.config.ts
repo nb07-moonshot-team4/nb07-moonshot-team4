@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
+
 const nextConfig: NextConfig = {
+ 
   async redirects() {
     return [
       {
@@ -15,27 +17,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+ 
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*',
+        hostname: '**', 
       },
       {
         protocol: 'http',
-        hostname: '*',
+        hostname: '**', 
       },
     ],
   },
 
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+ 
 
   webpack: (config) => {
     // @ts-expect-error 타입 에러 무시
