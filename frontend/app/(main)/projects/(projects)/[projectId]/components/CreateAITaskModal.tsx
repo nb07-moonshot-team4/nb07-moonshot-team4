@@ -30,14 +30,14 @@ const CreateAITaskModal = ({
       toast.error('프롬프트를 입력해주세요.');
       return;
     }
-
+  
     setIsLoading(true);
     try {
       const { success, error } = await createTaskWithAI({
         projectId,
         naturalLanguage: prompt.trim(),
       });
-
+  
       if (success) {
         toast.success(success);
         setPrompt('');
@@ -47,6 +47,7 @@ const CreateAITaskModal = ({
         toast.error(error || 'AI 할 일 생성 중 오류가 발생했습니다.');
       }
     } catch (error) {
+      console.error('AI 할 일 생성 오류:', error);
       toast.error('AI 할 일 생성 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);

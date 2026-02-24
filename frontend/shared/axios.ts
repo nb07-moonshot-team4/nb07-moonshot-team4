@@ -20,8 +20,13 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
    
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !originalRequest.url.includes('/auth/refresh') && !originalRequest._retry) {
+      console.log("리프레시 토큰이 만료되었습니다. 로그아웃합니다.");
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      
+      
       await refreshTokens();
       return axios(originalRequest);
     }

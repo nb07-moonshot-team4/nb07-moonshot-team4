@@ -53,6 +53,7 @@ export const createTask = async (
     title: data.title,
     description: data.description,
     projectId: projectId,
+    creatorId: userId,
     assigneeId: userId,
     status: taskStatus,
     attachments: data.attachments,
@@ -452,6 +453,7 @@ export const createTaskWithAI = async (
     description: parsedInput.description,
     projectId: projectId,
     assigneeId: userId,
+    creatorId: userId,
     status: "todo",
     attachments: parsedInput.attachments || [],
     tags: parsedInput.tags || [],
@@ -476,4 +478,27 @@ export const createTaskWithAI = async (
   }
 
   return CrudTaskApi(createdTask);
+};
+
+export const getMyTasks = async (
+  userId: number,
+  queryFilters?: {
+    status?: "todo" | "in_progress" | "done";
+    assigneeId?: number;
+    projectId?: number;
+    from?: string;
+    to?: string;
+    keyword?: string;
+  },
+): Promise<TaskDto[]> => {
+  const tasks = await taskRepo.getTasksByUserId(userId, {
+    status: queryFilters?.status,
+    assigneeId: queryFilters?.assigneeId,
+    projectId: queryFilters?.projectId,
+    keyword: queryFilters?.keyword,
+    from: queryFilters?.from,
+    to: queryFilters?.to,
+  });
+
+  return tasks.map((task) => CrudTaskApi(task));
 };

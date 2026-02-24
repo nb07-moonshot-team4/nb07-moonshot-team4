@@ -35,3 +35,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     code: "INTERNAL_SERVER_ERROR",
   });
 };
+
+export const handleMulterError = (err: any, req: any, res: any, next: any) => {
+  if (err) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: "파일 크기는 5MB를 초과할 수 없습니다" });
+    }
+    if (err.message && err.message.includes('이미지 파일만')) {
+      return res.status(400).json({ message: err.message });
+    }
+    return res.status(400).json({ message: "파일 업로드 중 오류가 발생했습니다." });
+  }
+  next();
+};

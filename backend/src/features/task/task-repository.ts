@@ -32,6 +32,7 @@ export function createTask(data: {
   attachments: string[];
   projectId: number;
   assigneeId?: number | null;
+  creatorId?: number;
   tags: string[];
   subTasks?: string[];
 }): Promise<TaskWithAssigneeAndTags> {
@@ -44,6 +45,7 @@ export function createTask(data: {
       status: toPrismaTaskStatus(data.status),
       projectId: data.projectId,
       assigneeId: data.assigneeId,
+      creatorId: data.creatorId,
       attachments: {
         create: data.attachments.map((url) => ({
           url,
@@ -313,5 +315,70 @@ export function deleteSubTask(subTaskId: number): Promise<SubTaskWithTask> {
   return prisma.subTask.delete({
     where: { id: subTaskId },
     include: { task: true },
+  });
+};
+
+
+export function getTasksByUserId(
+  userId: number,
+  {
+    status,
+    assigneeId,
+    projectId,
+    keyword,
+    from,
+    to,
+  }: {
+    status?: "todo" | "in_progress" | "done";
+    assigneeId?: number;
+    projectId?: number;
+    keyword?: string;
+    from?: string;
+    to?: string;
+  },
+): Promise<TaskWithAssigneeAndTags[]> {
+  const where: Prisma.TaskWhereInput = {
+    project: {
+      members: {
+        some: {
+          userId,
+          status: 'ACTIVE'
+        }
+      }
+    }
+  };
+
+  if (projectId) {
+    where.projectId = projectId;
+  }
+
+  if (status) {
+    where.status = toPrismaTaskStatus(status);
+  }
+
+  if (assigneeId) {
+    where.assigneeId = assigneeId;
+  }
+
+  if (keyword) {
+    where.title = { contains: keyword, mode: 'insensitive' };
+  }
+
+  if (from && to) {
+    where.createdAt = {
+      gte: new Date(from),
+      lte: new Date(to)
+    };
+  }
+
+  return prisma.task.findMany({
+    where,
+    include: {
+      assignee: true,
+      tags: { include: { tag: true } },
+      attachments: true,
+      subTasks: true,
+    },
+    orderBy: { createdAt: 'desc' },
   });
 }

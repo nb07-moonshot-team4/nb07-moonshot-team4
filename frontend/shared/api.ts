@@ -13,6 +13,10 @@ import {
 } from '@/types/entities';
 import { TaskStatus } from '@/types/TaskStatus';
 
+axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL;
+axios.defaults.withCredentials = true;
+
+
 const logError = (error: unknown) => {
   if (error instanceof AxiosError) {
     const response = error.response;
@@ -533,14 +537,23 @@ export const uploadFiles = async (files: File[]): Promise<string[]> => {
     formData.append('files', file);
   });
   try {
-    const response = await axios.postForm('/files', formData);
-    return response.data;
+    const response = await axios.postForm('/files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    
+    throw new Error('서버에서 예상하지 못한 응답을 받았습니다.');
   } catch (error) {
     logError(error);
     if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data.message ?? '파일 업로드 중 오류가 발생했습니다.'
-      );
+      const errorMessage = error.response?.data?.message || '파일 업로드 중 오류가 발생했습니다.';
+      throw new Error(errorMessage);
     }
     throw error;
   }

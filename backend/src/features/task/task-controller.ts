@@ -321,6 +321,7 @@ export const createTaskWithAI = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const getDashboardTasks = async (req: Request, res: Response) => {
   const { project_id, assignee_id, keyword, status } = req.query;
 
@@ -363,5 +364,42 @@ export const getDashboardTasks = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "대시보드 조회 실패", error });
+  }
+};
+
+export const uploadFiles = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+
+    if (req.file === undefined && (!req.files || (Array.isArray(req.files) && req.files.length === 0))) {
+      return res.status(400).json({ message: "파일이 필요합니다" });
+    }
+
+
+    const files = Array.isArray(req.files) ? req.files : [req.files];
+    const imageUrls = files.map((file: any) => file.secure_url || file.url).filter(Boolean);
+
+    if (imageUrls.length === 0) {
+      return res.status(500).json({ message: "이미지 URL을 가져올 수 없습니다" });
+    }
+
+    res.status(200).json(imageUrls);
+  } catch (error: any) {
+    console.error("파일 업로드 오류:", error);
+
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: "파일 크기는 5MB를 초과할 수 없습니다" });
+    }
+    
+    if (error.message && error.message.includes('이미지 파일만 업로드 할 수 있습니다.')) {
+      return res.status(400).json({ message: error.message });
+    }
+    
+    res.status(500).json({
+      message: "파일 업로드 중 오류가 발생했습니다.",
+      error: process.env.NODE_ENV === "development" ? error?.message : undefined,
+    });
   }
 };
